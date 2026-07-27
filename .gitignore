@@ -1,0 +1,19 @@
+# Private local wiki and operating state.
+# Leading slashes keep the generic starter inside the plugin publishable.
+/.obsidian/
+/.superpowers/
+/docs/
+/logs/
+/raw/
+/scripts/
+/templates/
+/tests/
+/wiki/
+/AGENTS.md
+/pyproject.toml
+/uv.lock
+
+# Local tools and generated files.
+/.venv/
+**/__pycache__/
+*.pyc

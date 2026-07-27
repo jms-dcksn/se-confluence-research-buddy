@@ -1,0 +1,32 @@
+{
+  "name": "confluence-research-buddy",
+  "version": "0.1.0",
+  "description": "Grounded Confluence research and an optional Obsidian research wiki.",
+  "author": {
+    "name": "Confluence Research Buddy contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "confluence",
+    "research",
+    "sales-engineering",
+    "obsidian"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Confluence Research Buddy",
+    "shortDescription": "Recent, cited research with an optional local wiki",
+    "longDescription": "Research internal Confluence information with strict freshness warnings and citations, or build an Obsidian-compatible wiki with a scheduled digest.",
+    "developerName": "Confluence Research Buddy contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "Research",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Find recent Confluence updates about this product.",
+      "Research this roadmap topic with citations.",
+      "Build my Confluence research wiki."
+    ]
+  }
+}

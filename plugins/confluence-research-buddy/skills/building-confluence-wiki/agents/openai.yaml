@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build a Confluence Research Wiki"
+  short_description: "Create an Obsidian wiki and scheduled digest"
+  default_prompt: "Use $building-confluence-wiki to create my cited Confluence research wiki."

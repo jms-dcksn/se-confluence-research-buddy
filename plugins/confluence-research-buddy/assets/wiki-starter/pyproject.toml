@@ -1,0 +1,8 @@
+[project]
+name = "confluence-research-wiki"
+version = "0.1.0"
+requires-python = ">=3.11"
+description = "Citation-first, Obsidian-compatible Confluence research wiki"
+
+[tool.uv]
+package = false

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research Confluence"
+  short_description: "Research cited Confluence and Jira evidence"
+  default_prompt: "Use $researching-confluence to research recent internal product information with cited Confluence and Jira evidence."
