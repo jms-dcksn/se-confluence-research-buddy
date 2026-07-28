@@ -31,9 +31,10 @@ digest instructions. You do not need an existing wiki.
 
 1. Download or clone this repository.
 2. In Codex, install and connect Atlassian Rovo.
-3. Open a terminal in the downloaded folder and run:
+3. Open a terminal in the downloaded folder and run the commands below. They
+   work in Windows PowerShell, macOS Terminal, and Linux shells:
 
-   ```powershell
+   ```shell
    codex plugin marketplace add .
    codex plugin add confluence-research-buddy@confluence-research-tools
    ```
@@ -42,7 +43,7 @@ digest instructions. You do not need an existing wiki.
 
 Verify the install:
 
-```powershell
+```shell
 codex plugin list
 ```
 
@@ -55,7 +56,8 @@ two install commands from that folder.
 
 - `Find recent Confluence updates about this product.`
 - `Research this roadmap topic with citations.`
-- `Build a new Confluence research wiki in C:\path\to\my-private-wiki.`
+- Windows: `Build a new Confluence research wiki in C:\path\to\my-private-wiki.`
+- macOS or Linux: `Build a new Confluence research wiki in /path/to/my-private-wiki.`
 
 For wiki setup, Codex asks for the destination, topics, and whether you want a
 scheduled digest. It copies the bundled empty starter without overwriting

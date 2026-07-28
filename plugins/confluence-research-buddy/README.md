@@ -8,21 +8,23 @@ wiki.
 
 1. Download or clone the repository containing this plugin.
 2. Install and connect Atlassian Rovo in Codex.
-3. Open a terminal in the downloaded folder and add its marketplace:
+3. Open a terminal in the downloaded folder and add its marketplace. The
+   commands in these steps work in Windows PowerShell, macOS Terminal, and
+   Linux shells:
 
-   ```powershell
+   ```shell
    codex plugin marketplace add .
    ```
 
 4. Install the plugin:
 
-   ```powershell
+   ```shell
    codex plugin add confluence-research-buddy@confluence-research-tools
    ```
 
 5. Verify the install:
 
-   ```powershell
+   ```shell
    codex plugin list
    ```
 
