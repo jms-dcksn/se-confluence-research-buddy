@@ -33,7 +33,7 @@ digest instructions. You do not need an existing wiki.
 
 In a Codex chat, send:
 
-> Install the plugin from https://github.com/UiPath-Coders/se-confluence-research-buddy.git.
+> Install the plugin from https://github.com/jms-dcksn/se-confluence-research-buddy.git.
 
 Codex can clone the repository and install the plugin for you. Approve any
 requested clone or plugin-install permission, then connect Atlassian Rovo.
@@ -44,7 +44,7 @@ In a terminal, run the following commands. They work in Windows PowerShell,
 macOS Terminal, and Linux shells:
 
 ```shell
-git clone https://github.com/UiPath-Coders/se-confluence-research-buddy.git
+git clone https://github.com/jms-dcksn/se-confluence-research-buddy.git
 cd se-confluence-research-buddy
 codex plugin marketplace add .
 codex plugin add confluence-research-buddy@confluence-research-tools
