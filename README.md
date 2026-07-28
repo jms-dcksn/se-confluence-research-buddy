@@ -29,17 +29,28 @@ digest instructions. You do not need an existing wiki.
 
 ## Install
 
-1. Download or clone this repository.
-2. In Codex, install and connect Atlassian Rovo.
-3. Open a terminal in the downloaded folder and run the commands below. They
-   work in Windows PowerShell, macOS Terminal, and Linux shells:
+### Easy route: ask Codex in chat
 
-   ```shell
-   codex plugin marketplace add .
-   codex plugin add confluence-research-buddy@confluence-research-tools
-   ```
+In a Codex chat, send:
 
-4. Start a new Codex task.
+> Install the plugin from https://github.com/UiPath-Coders/se-confluence-research-buddy.git.
+
+Codex can clone the repository and install the plugin for you. Approve any
+requested clone or plugin-install permission, then connect Atlassian Rovo.
+
+### Deterministic terminal route
+
+In a terminal, run the following commands. They work in Windows PowerShell,
+macOS Terminal, and Linux shells:
+
+```shell
+git clone https://github.com/UiPath-Coders/se-confluence-research-buddy.git
+cd se-confluence-research-buddy
+codex plugin marketplace add .
+codex plugin add confluence-research-buddy@confluence-research-tools
+```
+
+Then install and connect Atlassian Rovo in Codex, and start a new Codex task.
 
 Verify the install:
 
@@ -49,8 +60,8 @@ codex plugin list
 
 Look for `confluence-research-buddy@confluence-research-tools` with an enabled
 status. If it is missing, run `codex plugin marketplace list`, confirm that
-`confluence-research-tools` points to this downloaded folder, then repeat the
-two install commands from that folder.
+`confluence-research-tools` points to the cloned folder, then repeat the two
+Codex plugin commands from that folder.
 
 ## Try it
 

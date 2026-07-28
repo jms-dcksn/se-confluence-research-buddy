@@ -6,31 +6,34 @@ wiki.
 
 ## Install and start
 
-1. Download or clone the repository containing this plugin.
-2. Install and connect Atlassian Rovo in Codex.
-3. Open a terminal in the downloaded folder and add its marketplace. The
-   commands in these steps work in Windows PowerShell, macOS Terminal, and
-   Linux shells:
+### Easy route: ask Codex in chat
 
-   ```shell
-   codex plugin marketplace add .
-   ```
+In a Codex chat, send:
 
-4. Install the plugin:
+> Install the plugin from https://github.com/UiPath-Coders/se-confluence-research-buddy.git.
 
-   ```shell
-   codex plugin add confluence-research-buddy@confluence-research-tools
-   ```
+Codex can clone the repository and install the plugin for you. Approve any
+requested clone or plugin-install permission, then connect Atlassian Rovo.
 
-5. Verify the install:
+### Deterministic terminal route
 
-   ```shell
-   codex plugin list
-   ```
+Run these commands in Windows PowerShell, macOS Terminal, or Linux shells:
 
-   Look for `confluence-research-buddy@confluence-research-tools` with an
-   enabled status.
-6. Start a new Codex task and try one of these prompts:
+```shell
+git clone https://github.com/UiPath-Coders/se-confluence-research-buddy.git
+cd se-confluence-research-buddy
+codex plugin marketplace add .
+codex plugin add confluence-research-buddy@confluence-research-tools
+```
+
+Install and connect Atlassian Rovo in Codex, then verify the plugin:
+
+```shell
+codex plugin list
+```
+
+Look for `confluence-research-buddy@confluence-research-tools` with an enabled
+status. Start a new Codex task and try one of these prompts:
 
    - Find recent Confluence updates about this product.
    - Research this roadmap topic with citations.
@@ -39,8 +42,8 @@ wiki.
 The full wiki path needs Obsidian, Git, and `uv`. Its starter requires Python
 3.11 or newer; `uv` can obtain the needed Python runtime. If the plugin is
 missing from `codex plugin list`, run `codex plugin marketplace list`, confirm
-that `confluence-research-tools` points to the downloaded folder, and repeat
-steps 3 and 4 from that folder.
+that `confluence-research-tools` points to the cloned folder, and repeat the
+two Codex plugin commands from that folder.
 
 ## Before customer use
 
