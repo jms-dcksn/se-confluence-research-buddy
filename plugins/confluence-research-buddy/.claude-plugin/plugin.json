@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "confluence-research-buddy",
+  "displayName": "Confluence Research Buddy",
+  "version": "0.2.0",
+  "description": "Grounded Confluence research and an optional Obsidian research wiki.",
+  "author": {
+    "name": "Confluence Research Buddy contributors"
+  },
+  "homepage": "https://github.com/jms-dcksn/se-confluence-research-buddy",
+  "repository": "https://github.com/jms-dcksn/se-confluence-research-buddy",
+  "license": "MIT",
+  "keywords": [
+    "confluence",
+    "jira",
+    "research",
+    "sales-engineering",
+    "obsidian"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
+}

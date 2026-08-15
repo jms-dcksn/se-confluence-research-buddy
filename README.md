@@ -1,8 +1,8 @@
 # Confluence Research Buddy
 
-A Codex plugin for cited internal research with Atlassian Rovo. Use it for a
-single question, or let it create a private Obsidian wiki that tracks changes
-over time.
+A plugin for cited internal research with Atlassian Rovo, for both Claude Code
+and Codex. Use it for a single question, or let it create a private Obsidian
+wiki that tracks changes over time.
 
 ```mermaid
 flowchart LR
@@ -16,9 +16,10 @@ flowchart LR
 
 ## What you need
 
-- Codex
-- The Atlassian Rovo plugin, connected to the Confluence and Jira content you
-  are allowed to view
+- Claude Code or Codex
+- The Atlassian Rovo connector, connected to the Confluence and Jira content
+  you are allowed to view. Claude Code installs it with the plugin as an MCP
+  server; in Codex it is the Atlassian Rovo plugin
 - Obsidian, Git, and `uv` only if you want the full local wiki
 
 The full-wiki starter requires Python 3.11 or newer. `uv` can obtain the needed
@@ -27,7 +28,38 @@ Python runtime if it is not already installed.
 The plugin includes the empty wiki starter, templates, checks, and scheduled
 digest instructions. You do not need an existing wiki.
 
-## Install
+## Install on Claude Code
+
+In a Claude Code session:
+
+```text
+/plugin marketplace add jms-dcksn/se-confluence-research-buddy
+/plugin install confluence-research-buddy@confluence-research-tools
+```
+
+The plugin bundles the Atlassian Rovo MCP server. After installing, run `/mcp`
+and authenticate the `atlassian` server against your Atlassian site — it is
+listed as `plugin:confluence-research-buddy:atlassian` and starts in a
+`Needs authentication` state. Verify with `/plugin` that
+`confluence-research-buddy` is enabled and with `/mcp` that the server is
+connected.
+
+Then try one of the prompts under [Try it](#try-it), or invoke a skill directly
+with `/confluence-research-buddy:researching-confluence` or
+`/confluence-research-buddy:building-confluence-wiki`.
+
+If you already connect to Atlassian through your own MCP config, the bundled
+server is redundant — disable it in `/mcp` and the skills will use yours.
+
+### Scheduling the digest on Claude Code
+
+The digest reads and writes a local folder, so it needs a scheduler with local
+file access. Use a **Desktop scheduled task** — it persists across restarts and
+does not need a session open. `CronCreate` inside a CLI session works as a
+stopgap but is session-scoped and expires after seven days. Cloud Routines run
+from a fresh clone with no access to your wiki folder and will not work.
+
+## Install on Codex
 
 ### Easy route: ask Codex in chat
 
@@ -70,9 +102,9 @@ Codex plugin commands from that folder.
 - Windows: `Build a new Confluence research wiki in C:\path\to\my-private-wiki.`
 - macOS or Linux: `Build a new Confluence research wiki in /path/to/my-private-wiki.`
 
-For wiki setup, Codex asks for the destination, topics, and whether you want a
-scheduled digest. It copies the bundled empty starter without overwriting
-existing files.
+For wiki setup, the agent asks for the destination, topics, and whether you
+want a scheduled digest. It copies the bundled empty starter without
+overwriting existing files.
 
 ## Safety
 

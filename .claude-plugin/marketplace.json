@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "confluence-research-tools",
+  "description": "Cited internal research over Confluence and Jira, with an optional local research wiki.",
+  "owner": {
+    "name": "Confluence Research Buddy contributors",
+    "url": "https://github.com/jms-dcksn/se-confluence-research-buddy"
+  },
+  "plugins": [
+    {
+      "name": "confluence-research-buddy",
+      "displayName": "Confluence Research Buddy",
+      "description": "Grounded Confluence and Jira research with strict freshness and citation rules, plus an optional Obsidian-compatible research wiki.",
+      "source": "./plugins/confluence-research-buddy",
+      "author": {
+        "name": "Confluence Research Buddy contributors"
+      },
+      "license": "MIT",
+      "homepage": "https://github.com/jms-dcksn/se-confluence-research-buddy",
+      "keywords": [
+        "confluence",
+        "jira",
+        "research",
+        "sales-engineering",
+        "obsidian"
+      ]
+    }
+  ]
+}

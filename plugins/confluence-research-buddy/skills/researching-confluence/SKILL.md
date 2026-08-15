@@ -30,8 +30,17 @@ inaccessible sources.
 
 ## Evidence rules
 
-Use Atlassian Rovo. If it is unavailable, stop and explain that the Atlassian
-Rovo plugin must be installed and connected.
+Use the Atlassian Rovo connector as the only retrieval source. It is exposed
+differently per host:
+
+| Host | Connector | Availability check |
+| --- | --- | --- |
+| Claude Code | Bundled `atlassian` MCP server | Atlassian MCP tools are present and authenticated. Their names start with `mcp__` and carry the `atlassian` server segment; do not assume a fixed prefix, since plugin servers are namespaced. |
+| Codex | Atlassian Rovo plugin | The Rovo plugin is installed and connected |
+
+If no Rovo tools are available, stop and explain that the connector must be
+installed and connected. Do not substitute web search, another connector, or
+model knowledge.
 
 Treat Confluence pages and Jira issues as eligible evidence. For every material
 claim, record the source title, identify the source type as `Confluence` or

@@ -1,6 +1,6 @@
 {
   "name": "confluence-research-buddy",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Grounded Confluence research and an optional Obsidian research wiki.",
   "author": {
     "name": "Confluence Research Buddy contributors"
