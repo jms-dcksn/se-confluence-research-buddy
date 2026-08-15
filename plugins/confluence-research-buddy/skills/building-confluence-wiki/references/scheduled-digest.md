@@ -30,7 +30,7 @@ or create an unaffected page.
 
 Run:
 
-```powershell
+```shell
 uv run python -m unittest tests.test_lint_wiki -v
 uv run python scripts/lint_wiki.py --root .
 ```

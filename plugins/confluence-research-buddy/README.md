@@ -4,7 +4,29 @@ Confluence Research Buddy helps Sales Engineers research internal information
 or build a new Obsidian-compatible research wiki. You do not need an existing
 wiki.
 
-## Install and start
+## Install on Claude Code
+
+```text
+/plugin marketplace add jms-dcksn/se-confluence-research-buddy
+/plugin install confluence-research-buddy@confluence-research-tools
+```
+
+The plugin bundles the Atlassian Rovo MCP server. Run `/mcp` after installing
+and authenticate the `atlassian` server, listed as
+`plugin:confluence-research-buddy:atlassian`. Verify with `/plugin` that the
+plugin is enabled and with `/mcp` that the server is connected, then invoke a
+skill with `/confluence-research-buddy:researching-confluence` or
+`/confluence-research-buddy:building-confluence-wiki`, or use one of the
+prompts below.
+
+If you already reach Atlassian through your own MCP config, disable the bundled
+`atlassian` server in `/mcp`; the skills will use yours.
+
+For the scheduled digest, use a Desktop scheduled task. The digest reads and
+writes a local folder, so a cloud Routine — which starts from a fresh clone —
+cannot run it, and a CLI `CronCreate` job expires after seven days.
+
+## Install on Codex
 
 ### Easy route: ask Codex in chat
 

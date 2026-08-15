@@ -22,9 +22,12 @@ Collect or confirm these inputs before changing files:
 | Ingest mode | Manual only or scheduled digest |
 | Schedule | Digest time and timezone, if scheduled |
 
-Confirm Atlassian Rovo is installed and connected before setup. If it is
-unavailable, stop and explain that the Atlassian Rovo plugin must be installed
-and connected. Do not substitute unverified snippets or another connector.
+Confirm the Atlassian Rovo connector is installed and connected before setup.
+In Claude Code it is the bundled `atlassian` MCP server: check that its tools
+are present and authenticated, matching on the `atlassian` server segment
+rather than a fixed `mcp__` prefix. In Codex it is the Atlassian Rovo plugin.
+If it is unavailable, stop and explain that the connector must be installed and
+connected. Do not substitute unverified snippets or another connector.
 
 Confluence pages and Jira issues retrieved through Atlassian Rovo are both
 eligible sources. Every material claim must include a source title, direct URL,
@@ -35,8 +38,11 @@ label, and evidence status.
 
 1. Inspect the destination, including hidden files, before copying anything.
 2. In the setup plan, say: `Use the bundled generic wiki starter.` Resolve it
-   at `../../assets/wiki-starter/`, relative to this skill, then compare its
-   relative paths with the destination.
+   at `assets/wiki-starter/` under the plugin root — in Claude Code that is
+   `${CLAUDE_PLUGIN_ROOT}/assets/wiki-starter/`; otherwise resolve
+   `../../assets/wiki-starter/` relative to this skill file. Do not assume the
+   plugin is installed at a fixed path. Then compare its relative paths with
+   the destination.
 3. Preserve every existing file. Copy only non-conflicting starter files. If a
    destination path already exists, show the conflict and ask whether to keep,
    rename, or explicitly replace it; do not overwrite by default.
@@ -57,7 +63,7 @@ label, and evidence status.
    anything.
 8. Run:
 
-   ```powershell
+   ```shell
    uv run python -m unittest tests.test_lint_wiki -v
    uv run python scripts/lint_wiki.py --root .
    ```
@@ -93,10 +99,19 @@ When scheduling is requested:
    Interpolate literal values, not placeholders or "configured topics." Copy
    the complete reference text into the prompt; do not give the automation only
    a pointer to the file.
-5. Search for and use the Codex automation tool. Create exactly one recurring
-   automation with the destination as its working folder and the constructed
-   prompt. Never create a live schedule during a description-only or
-   validation scenario.
+5. Create exactly one recurring automation, with the destination as its working
+   folder and the constructed prompt as its instruction. Pick the scheduler
+   that fits the host:
+
+   | Host | Scheduler | Note |
+   | --- | --- | --- |
+   | Claude Code desktop | Desktop scheduled task | Preferred. Runs locally, reaches the wiki folder, persists across restarts. |
+   | Claude Code CLI | `CronCreate` | Session-scoped and expires after seven days. Offer it only as a stopgap and say so plainly. |
+   | Codex | Codex automation tool | |
+
+   The digest reads and writes a local folder, so never schedule it on a
+   cloud runner that starts from a fresh clone. Never create a live schedule
+   during a description-only or validation scenario.
 6. Read back the created automation and verify the exact topics, destination,
    digest time, timezone, and complete job contract. Report the schedule and
    timezone. Do not create a second automation to compensate for uncertainty;
@@ -116,5 +131,7 @@ commit, or delete files.
 | Copying over an occupied folder | Compare paths first; ask on each conflict |
 | Assuming 9:00 means local time | Confirm an explicit timezone |
 | Running `git init` automatically | Initialize only after `git rev-parse` fails |
+| Scheduling the digest on a cloud runner | The wiki is local; use a scheduler with local file access |
+| Hardcoding the starter path | Resolve it from the plugin root, which moves on update |
 | Treating lint as retrieval proof | Label it local structural validation |
 | Accepting generated updates | Require human evidence and diff review |
