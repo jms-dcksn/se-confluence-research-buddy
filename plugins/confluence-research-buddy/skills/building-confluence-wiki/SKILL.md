@@ -1,6 +1,6 @@
 ---
 name: building-confluence-wiki
-description: Use when creating, customizing, validating, or scheduling an Obsidian-compatible local wiki for recurring Confluence research and digest tracking.
+description: Use when creating, customizing, validating, or scheduling an Obsidian-compatible local wiki for recurring Confluence research, cross-product discovery, and digest tracking.
 ---
 
 # Building a Confluence Research Wiki
@@ -18,9 +18,22 @@ Collect or confirm these inputs before changing files:
 | Input | Required detail |
 | --- | --- |
 | Destination | Absolute local folder |
-| Topics | Product, program, or theme names |
+| Core topics | Product, program, or theme names. The standing watchlist, not a ceiling. |
+| Excluded areas | Spaces or topics the sweep must never surface. Optional; ask, do not assume. |
+| Discovery budget | Searches per run spent outside every band. Default 5. |
+| Instance size | Rough number of active Confluence spaces, used to set the sweep caps |
 | Ingest mode | Manual only or scheduled digest |
 | Schedule | Digest time and timezone, if scheduled |
+
+Explain that core topics are the floor, not the ceiling: the digest also
+searches outward and records what it finds as signals, so under-listing here is
+safe and over-listing narrows the wiki. If the user gives no excluded areas,
+leave the band empty rather than inventing entries.
+
+Set the sweep caps from the instance size. `sweep_max_spaces` defaults to 25;
+raise it toward full coverage on a small instance, and lower it on a large or
+noisy one so a single run stays bounded. Tell the user which values you chose
+and that they can edit them in `wiki/research-scope.md` at any time.
 
 Confirm the Atlassian Rovo connector is installed and connected before setup.
 In Claude Code it is the bundled `atlassian` MCP server: check that its tools
@@ -49,10 +62,11 @@ label, and evidence status.
 4. Create one `wiki/products/<topic-slug>.md` page per topic from
    `templates/product.md`. Replace placeholders and add the pages to
    `wiki/index.md`.
-5. Populate `wiki/research-scope.md` with the exact topic names in order,
-   absolute destination, digest time, timezone, and setup date. For manual-only
-   setup, use `manual-only` for digest time and timezone. Leave no setup
-   placeholder in the page.
+5. Populate `wiki/research-scope.md`: the exact topic names in order under
+   `core`, any excluded areas under `excluded`, an empty `adjacent` band, the
+   discovery budget and sweep caps, absolute destination, digest time,
+   timezone, and setup date. For manual-only setup, use `manual-only` for
+   digest time and timezone. Leave no setup placeholder in the page.
 6. Replace `last_reviewed: YYYY-MM-DD` in `wiki/index.md` with the setup date.
    Initialize `logs/YYYY-MM.md` for the current month with a Markdown heading
    when it is absent. Preserve and inspect an existing monthly log instead of
@@ -124,6 +138,20 @@ must inspect citations, dates, statuses, conflicts, and generated diffs before
 committing or using findings with customers. The automation must never stage,
 commit, or delete files.
 
+Walk the user through the two things the digest will produce beyond claims:
+
+- `wiki/signals/` fills on its own with one-source observations. Nothing there
+  is asserted or customer-safe. Recurring signals are the raw material for a
+  theme.
+- `wiki/inbox/` holds proposals the digest is not allowed to act on: new
+  themes, and any change to `core` or `excluded`. Nothing there takes effect
+  until the user accepts it, and the linter warns once an item has been pending
+  for a month.
+
+Say plainly that the digest will edit the `adjacent` band and the discovery log
+by itself, and will never touch `core` or `excluded`. Point at the discovery
+log as the place to see what it has been steering toward.
+
 ## Common mistakes
 
 | Mistake | Correction |
@@ -135,3 +163,7 @@ commit, or delete files.
 | Hardcoding the starter path | Resolve it from the plugin root, which moves on update |
 | Treating lint as retrieval proof | Label it local structural validation |
 | Accepting generated updates | Require human evidence and diff review |
+| Treating core topics as the whole scope | They are the floor; the discovery budget searches past them |
+| Editing `core` or `excluded` unattended | Raise an inbox proposal and wait |
+| Writing a theme page from one run | Themes assert a pattern; propose, do not create |
+| Recording a signal as a claim | Signals carry no status and expire nothing |

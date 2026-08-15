@@ -32,11 +32,41 @@ VALID_SOURCE_TYPES = {"Confluence", "Jira"}
 UNCONFIGURED_VALUES = {"", "TO_BE_CONFIGURED", "YYYY-MM-DD"}
 WIKILINK_PATTERN = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]+)?(?:\|[^\]]+)?\]\]")
 
+SIGNAL_REQUIRED_FIELDS = {
+    "id",
+    "title",
+    "observed",
+    "band",
+    "source_title",
+    "source_type",
+    "source_updated",
+    "source_url",
+    "status",
+    "promoted_to",
+}
+VALID_SIGNAL_STATUSES = {"open", "promoted", "dismissed"}
+VALID_BANDS = {"core", "adjacent", "frontier"}
+INBOX_REQUIRED_FIELDS = {"id", "proposal_type", "title", "raised", "status", "evidence"}
+VALID_INBOX_STATUSES = {"pending", "accepted", "rejected"}
+VALID_PROPOSAL_TYPES = {"theme", "scope-change", "product"}
+SCOPE_BUDGET_FIELDS = (
+    "frontier_searches",
+    "sweep_activity_days",
+    "sweep_max_spaces",
+    "max_signals_per_run",
+)
+
+# Backlog thresholds. These raise warnings, never errors: an unattended
+# backlog is a review signal, not a broken wiki.
+STALE_SIGNAL_DAYS = 45
+STALE_INBOX_DAYS = 30
+
 
 @dataclass(frozen=True)
 class ValidationIssue:
     path: Path
     message: str
+    severity: str = "error"
 
 
 def _parse_value(value: str) -> object:
@@ -80,8 +110,12 @@ def parse_frontmatter(path: Path) -> dict[str, object]:
     return {}
 
 
-def _issue(path: Path, message: str) -> ValidationIssue:
-    return ValidationIssue(path=path, message=message)
+def _issue(path: Path, message: str, severity: str = "error") -> ValidationIssue:
+    return ValidationIssue(path=path, message=message, severity=severity)
+
+
+def _warn(path: Path, message: str) -> ValidationIssue:
+    return _issue(path, message, severity="warning")
 
 
 def _as_list(value: object) -> list[str]:
@@ -131,14 +165,30 @@ def _validate_setup(wiki_root: Path) -> list[ValidationIssue]:
     scope_path = wiki_root / "research-scope.md"
     if scope_path.exists():
         scope = parse_frontmatter(scope_path)
-        topics = _as_list(scope.get("topics"))
-        if not topics or any(not _is_configured_text(topic) for topic in topics):
+        # `topics` is the pre-band field name, still accepted so wikis built
+        # before scope bands existed keep linting clean.
+        core_key = "core" if "core" in scope else "topics"
+        core = _as_list(scope.get(core_key))
+        if not core or any(not _is_configured_text(topic) for topic in core):
             issues.append(
                 _issue(
                     scope_path,
-                    "topics must contain at least one configured topic",
+                    f"{core_key} must contain at least one configured topic",
                 )
             )
+        for band in ("adjacent", "excluded"):
+            if band in scope and not isinstance(scope[band], list):
+                issues.append(_issue(scope_path, f"{band} must be a list"))
+        for field in SCOPE_BUDGET_FIELDS:
+            if field not in scope:
+                continue
+            try:
+                budget = int(str(scope[field]))
+            except (TypeError, ValueError):
+                issues.append(_issue(scope_path, f"{field} must be a whole number"))
+            else:
+                if budget < 0:
+                    issues.append(_issue(scope_path, f"{field} must not be negative"))
         for field in ("destination", "timezone", "digest_time"):
             if not _is_configured_text(scope.get(field)):
                 issues.append(_issue(scope_path, f"{field} must be configured"))
@@ -152,11 +202,123 @@ def _validate_setup(wiki_root: Path) -> list[ValidationIssue]:
     return issues
 
 
+def _validate_signals(wiki_root: Path, today: date) -> tuple[list[ValidationIssue], set[str]]:
+    """Signals are cheap one-source observations, so they are held to a
+    lighter contract than claims: cited and dated, but never status-classified
+    and never expiring. An unpromoted backlog warns instead of failing."""
+    issues: list[ValidationIssue] = []
+    seen: set[str] = set()
+
+    for path in sorted((wiki_root / "signals").glob("*.md")):
+        metadata = parse_frontmatter(path)
+        for field in sorted(SIGNAL_REQUIRED_FIELDS - metadata.keys()):
+            issues.append(_issue(path, f"missing required field: {field}"))
+
+        signal_id = metadata.get("id")
+        if not isinstance(signal_id, str) or not signal_id:
+            issues.append(_issue(path, "id must be a non-empty string"))
+            continue
+        if signal_id in seen:
+            issues.append(_issue(path, f"duplicate signal id: {signal_id}"))
+            continue
+        seen.add(signal_id)
+
+        status = metadata.get("status")
+        if "status" in metadata and status not in VALID_SIGNAL_STATUSES:
+            issues.append(_issue(path, f"invalid signal status: {status}"))
+
+        band = metadata.get("band")
+        if "band" in metadata and band not in VALID_BANDS:
+            issues.append(_issue(path, f"invalid band: {band}"))
+
+        if "source_type" in metadata and metadata["source_type"] not in VALID_SOURCE_TYPES:
+            issues.append(_issue(path, "source_type must be Confluence or Jira"))
+
+        source_url = metadata.get("source_url")
+        if not isinstance(source_url, str) or not source_url.startswith("https://"):
+            issues.append(_issue(path, "source_url must begin with https://"))
+
+        try:
+            observed = date.fromisoformat(str(metadata.get("observed")))
+        except ValueError:
+            issues.append(_issue(path, "observed must be YYYY-MM-DD"))
+        else:
+            if status == "open" and (today - observed).days > STALE_SIGNAL_DAYS:
+                issues.append(
+                    _warn(
+                        path,
+                        f"signal has been open for more than {STALE_SIGNAL_DAYS} days; "
+                        "promote or dismiss it",
+                    )
+                )
+
+        try:
+            date.fromisoformat(str(metadata.get("source_updated")))
+        except ValueError:
+            issues.append(_issue(path, "source_updated must be YYYY-MM-DD"))
+
+        if status == "promoted" and not _as_list(metadata.get("promoted_to")):
+            issues.append(_issue(path, "promoted signal must record promoted_to"))
+
+    return issues, seen
+
+
+def _validate_inbox(wiki_root: Path, today: date) -> list[ValidationIssue]:
+    """Inbox items are proposals awaiting a human decision. They gate the
+    consequential edits — new themes and scope changes — that the digest is
+    not allowed to make on its own."""
+    issues: list[ValidationIssue] = []
+    seen: set[str] = set()
+
+    for path in sorted((wiki_root / "inbox").glob("*.md")):
+        metadata = parse_frontmatter(path)
+        for field in sorted(INBOX_REQUIRED_FIELDS - metadata.keys()):
+            issues.append(_issue(path, f"missing required field: {field}"))
+
+        item_id = metadata.get("id")
+        if not isinstance(item_id, str) or not item_id:
+            issues.append(_issue(path, "id must be a non-empty string"))
+            continue
+        if item_id in seen:
+            issues.append(_issue(path, f"duplicate inbox id: {item_id}"))
+            continue
+        seen.add(item_id)
+
+        status = metadata.get("status")
+        if "status" in metadata and status not in VALID_INBOX_STATUSES:
+            issues.append(_issue(path, f"invalid inbox status: {status}"))
+
+        proposal_type = metadata.get("proposal_type")
+        if "proposal_type" in metadata and proposal_type not in VALID_PROPOSAL_TYPES:
+            issues.append(_issue(path, f"invalid proposal_type: {proposal_type}"))
+
+        if "evidence" in metadata and not _as_list(metadata.get("evidence")):
+            issues.append(_issue(path, "proposal must cite at least one signal or claim"))
+
+        try:
+            raised = date.fromisoformat(str(metadata.get("raised")))
+        except ValueError:
+            issues.append(_issue(path, "raised must be YYYY-MM-DD"))
+        else:
+            if status == "pending" and (today - raised).days > STALE_INBOX_DAYS:
+                issues.append(
+                    _warn(
+                        path,
+                        f"proposal has been pending for more than {STALE_INBOX_DAYS} days",
+                    )
+                )
+
+    return issues
+
+
 def lint(root: Path, today: date) -> list[ValidationIssue]:
     root = root.resolve()
     wiki_root = root / "wiki"
     claim_paths = sorted((wiki_root / "claims").glob("*.md"))
     issues = _validate_setup(wiki_root)
+    signal_issues, _ = _validate_signals(wiki_root, today)
+    issues.extend(signal_issues)
+    issues.extend(_validate_inbox(wiki_root, today))
     claims: dict[str, tuple[Path, dict[str, object]]] = {}
 
     for path in claim_paths:
@@ -236,6 +398,10 @@ def lint(root: Path, today: date) -> list[ValidationIssue]:
             if not predecessor_record or claim_id not in _as_list(predecessor_record[1].get("superseded_by")):
                 issues.append(_issue(path, f"missing reciprocal supersession for {predecessor}"))
 
+    # A claim is anchored only by the navigable wiki: product and theme pages,
+    # the index, logs. Signals and inbox proposals are a staging area, so a
+    # link from one of them does not rescue a claim from being an orphan.
+    staging_dirs = {wiki_root / "claims", wiki_root / "signals", wiki_root / "inbox"}
     inbound_claim_links: set[Path] = set()
     for page in wiki_root.rglob("*.md"):
         for target in _wikilinks(page):
@@ -244,7 +410,7 @@ def lint(root: Path, today: date) -> list[ValidationIssue]:
             target_path = wiki_root / f"{target}.md"
             if not target_path.exists():
                 issues.append(_issue(page, f"missing wikilink target: {target}"))
-            elif page.parent != wiki_root / "claims" and target_path.parent == wiki_root / "claims":
+            elif page.parent not in staging_dirs and target_path.parent == wiki_root / "claims":
                 inbound_claim_links.add(target_path.resolve())
 
     for path in claim_paths:
@@ -260,12 +426,20 @@ def main() -> int:
     parser.add_argument("--today", type=date.fromisoformat, default=date.today())
     args = parser.parse_args()
     issues = lint(args.root, args.today)
-    if issues:
-        root = args.root.resolve()
-        for issue in issues:
-            print(f"{issue.path.resolve().relative_to(root)}: {issue.message}")
+    root = args.root.resolve()
+    errors = [issue for issue in issues if issue.severity == "error"]
+    warnings = [issue for issue in issues if issue.severity == "warning"]
+
+    for issue in issues:
+        location = issue.path.resolve().relative_to(root)
+        print(f"{issue.severity}: {location}: {issue.message}")
+
+    if errors:
         return 1
-    print("lint passed")
+    if warnings:
+        print(f"lint passed with {len(warnings)} warning(s)")
+    else:
+        print("lint passed")
     return 0
 
 
