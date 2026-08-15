@@ -11,10 +11,19 @@ to `wiki/`.
 | `wiki/signals/` | One-source observations that assert nothing yet | The digest |
 | `wiki/inbox/` | Proposals waiting on your decision | The digest raises, you decide |
 | `wiki/themes/` | Named cross-product patterns | You, by accepting a proposal |
+| `wiki/questions/` | What the wiki does not know yet | The synthesis pass raises, the digest chases |
 | `wiki/products/` | Per-topic pages | The digest, for accepted topics |
 
 Start each review in `wiki/inbox/`. The digest cannot create a theme or change
 what the wiki is scoped to; it can only ask.
+
+## Rhythm
+
+The daily digest keeps known work current and spends part of every run
+searching outside the topic list. On `synthesis_day` it also runs
+`contracts/synthesis-pass.md`, which reads this wiki rather than Confluence and
+looks for patterns across products. Themes are proposed only by that pass, and
+only you can accept one.
 
 `wiki/research-scope.md` holds the scope bands and the discovery budget. Edit
 `core` and `excluded` freely — they are yours. `adjacent` is maintained by the

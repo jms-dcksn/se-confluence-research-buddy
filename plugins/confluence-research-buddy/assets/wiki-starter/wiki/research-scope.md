@@ -8,6 +8,7 @@ frontier_searches: 5
 sweep_activity_days: 14
 sweep_max_spaces: 25
 max_signals_per_run: 10
+synthesis_day: Sunday
 destination: TO_BE_CONFIGURED
 timezone: TO_BE_CONFIGURED
 digest_time: TO_BE_CONFIGURED
@@ -38,6 +39,7 @@ across the whole instance so the wiki can find work that no band names yet.
 | `sweep_activity_days` | Window used to rank spaces by recent update volume. |
 | `sweep_max_spaces` | Cap on how many spaces one sweep may sample. Raise it for a small instance, lower it for a noisy one. |
 | `max_signals_per_run` | Cap on new signals written per run, so one busy week cannot flood the wiki. |
+| `synthesis_day` | Weekday the digest also runs the synthesis pass, which looks for trends across accumulated signals instead of searching Confluence. |
 
 ## Discovery log
 

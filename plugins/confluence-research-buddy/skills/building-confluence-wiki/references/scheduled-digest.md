@@ -24,6 +24,17 @@ within seven days. Record material changes and explicit no-change coverage for
 every core entry, so silence is visible as a checked result rather than an
 omission.
 
+## Pass 1b — open questions
+
+Read every `status: open` file in `wiki/questions/` and use its "what would
+answer it" section as a search seed. This is how last week's reading directs
+this week's, instead of every run restarting from the same list.
+
+For each question searched, append what you looked at to its "what has been
+searched" section and update `last_searched`, whether or not you found anything.
+When a source settles a question, set `status: answered` and record the claim or
+signal ID in `answered_by`.
+
 ## Pass 2 — adjacent
 
 Search every entry in `adjacent` the same way, but do not require no-change
@@ -97,6 +108,18 @@ Every proposal must cite the signal or claim IDs that justify it in `evidence`.
 A proposal with no evidence is not ready to raise. Before raising one, check the
 inbox for an existing pending item and for a rejected item making the same
 argument; re-raising something a human already declined is noise, not diligence.
+
+## Synthesis
+
+When today's weekday matches `synthesis_day` in `wiki/research-scope.md`, run
+the synthesis pass after the passes above finish, following
+`contracts/synthesis-pass.md` in the working folder. It performs no retrieval;
+it reads the wiki and looks for trends across accumulated signals. On every
+other day, skip it. If that file is missing, say so and skip the pass rather
+than improvising a trend review.
+
+Themes are proposed only by that pass. A daily run never creates or proposes a
+theme, however suggestive a single day's results look.
 
 ## Claims
 

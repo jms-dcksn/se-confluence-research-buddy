@@ -62,6 +62,37 @@ evidence:
 ## Proposal
 """
 
+VALID_THEME = """---
+title: Evaluation tooling
+kind: theme
+maturity: emerging
+last_reviewed: 2026-08-15
+last_synthesized: 2026-08-15
+products: [Product Atlas, Product Beacon]
+emerged_from: [SIG-20260815-001, SIG-20260808-004, CLM-20260815-001]
+current_claims: []
+historical_claims: []
+open_questions: []
+---
+
+# Evaluation tooling
+"""
+
+VALID_QUESTION = """---
+id: QST-20260815-001
+kind: question
+title: Which team owns the shared evaluation harness?
+raised: 2026-08-15
+status: open
+themes: []
+products: []
+answered_by: []
+last_searched: 2026-08-15
+---
+
+# Which team owns the shared evaluation harness?
+"""
+
 
 class LintWikiTests(unittest.TestCase):
     def write_claim(self, root: Path, name: str, content: str) -> None:
@@ -76,6 +107,16 @@ class LintWikiTests(unittest.TestCase):
 
     def write_inbox_item(self, root: Path, name: str, content: str) -> None:
         path = root / "wiki" / "inbox" / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+
+    def write_theme(self, root: Path, name: str, content: str) -> None:
+        path = root / "wiki" / "themes" / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+
+    def write_question(self, root: Path, name: str, content: str) -> None:
+        path = root / "wiki" / "questions" / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
 
@@ -591,6 +632,179 @@ last_configured: {configured_date}
         self.assertEqual(1, len(pending))
         self.assertEqual("warning", pending[0].severity)
         self.assertFalse(any(issue.severity == "error" for issue in issues))
+
+    def test_accepts_a_complete_theme(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_theme(root, "evaluation-tooling.md", VALID_THEME)
+            issues = lint(root, date(2026, 8, 15))
+        self.assertEqual([], issues)
+
+    def test_theme_template_satisfies_the_theme_contract(self) -> None:
+        template = (
+            Path(__file__).resolve().parents[1] / "templates" / "theme.md"
+        ).read_text(encoding="utf-8")
+        theme = (
+            template
+            .replace("last_reviewed: YYYY-MM-DD", "last_reviewed: 2026-08-15")
+            .replace("last_synthesized: YYYY-MM-DD", "last_synthesized: 2026-08-15")
+            .replace(
+                "emerged_from: []",
+                "emerged_from: [SIG-20260815-001, SIG-20260808-004, CLM-20260815-001]",
+            )
+        )
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_theme(root, "from-template.md", theme)
+            issues = lint(root, date(2026, 8, 15))
+        self.assertEqual([], issues)
+
+    def test_rejects_a_theme_with_no_emergence_evidence(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_theme(
+                root,
+                "unevidenced.md",
+                VALID_THEME.replace(
+                    "emerged_from: [SIG-20260815-001, SIG-20260808-004, CLM-20260815-001]",
+                    "emerged_from: []",
+                ),
+            )
+            issues = lint(root, date(2026, 8, 15))
+        self.assertTrue(
+            any(
+                issue.message == "theme must record the evidence it emerged from"
+                for issue in issues
+            )
+        )
+
+    def test_rejects_an_invalid_theme_maturity(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_theme(
+                root,
+                "odd.md",
+                VALID_THEME.replace("maturity: emerging", "maturity: vibes"),
+            )
+            issues = lint(root, date(2026, 8, 15))
+        self.assertTrue(any(issue.message == "invalid maturity: vibes" for issue in issues))
+
+    def test_thin_theme_warns_without_failing(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_theme(
+                root,
+                "thin.md",
+                VALID_THEME.replace(
+                    "emerged_from: [SIG-20260815-001, SIG-20260808-004, CLM-20260815-001]",
+                    "emerged_from: [SIG-20260815-001]",
+                ),
+            )
+            issues = lint(root, date(2026, 8, 15))
+        thin = [issue for issue in issues if "fewer than" in issue.message]
+        self.assertEqual(1, len(thin))
+        self.assertEqual("warning", thin[0].severity)
+        self.assertFalse(any(issue.severity == "error" for issue in issues))
+
+    def test_faded_theme_is_not_warned_for_thin_evidence(self) -> None:
+        """A faded theme is retired on purpose; its evidence has thinned by design."""
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_theme(
+                root,
+                "faded.md",
+                VALID_THEME
+                .replace("maturity: emerging", "maturity: faded")
+                .replace(
+                    "emerged_from: [SIG-20260815-001, SIG-20260808-004, CLM-20260815-001]",
+                    "emerged_from: [SIG-20260815-001]",
+                ),
+            )
+            issues = lint(root, date(2026, 8, 15))
+        self.assertEqual([], issues)
+
+    def test_unsynthesized_theme_warns_without_failing(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_theme(root, "evaluation-tooling.md", VALID_THEME)
+            issues = lint(root, date(2026, 12, 15))
+        stale = [issue for issue in issues if "re-grounded" in issue.message]
+        self.assertEqual(1, len(stale))
+        self.assertEqual("warning", stale[0].severity)
+        self.assertFalse(any(issue.severity == "error" for issue in issues))
+
+    def test_theme_link_anchors_a_claim(self) -> None:
+        """Themes are navigation, so a theme link must rescue a claim."""
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_claim(root, "product-release.md", VALID_CLAIM)
+            self.write_theme(
+                root,
+                "evaluation-tooling.md",
+                VALID_THEME + "\n[[claims/product-release]]\n",
+            )
+            issues = lint(root, date(2026, 7, 24))
+        self.assertFalse(any("orphan claim" in issue.message for issue in issues))
+
+    def test_accepts_a_complete_question(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_question(root, "harness-owner.md", VALID_QUESTION)
+            issues = lint(root, date(2026, 8, 15))
+        self.assertEqual([], issues)
+
+    def test_question_template_satisfies_the_question_contract(self) -> None:
+        template = (
+            Path(__file__).resolve().parents[1] / "templates" / "question.md"
+        ).read_text(encoding="utf-8")
+        question = (
+            template
+            .replace("QST-YYYYMMDD-NNN", "QST-20260815-999")
+            .replace("raised: YYYY-MM-DD", "raised: 2026-08-15")
+            .replace("last_searched: YYYY-MM-DD", "last_searched: 2026-08-15")
+        )
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_question(root, "from-template.md", question)
+            issues = lint(root, date(2026, 8, 15))
+        self.assertEqual([], issues)
+
+    def test_rejects_an_answered_question_with_no_answer(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_question(
+                root,
+                "unanswered.md",
+                VALID_QUESTION.replace("status: open", "status: answered"),
+            )
+            issues = lint(root, date(2026, 8, 15))
+        self.assertTrue(
+            any(
+                issue.message == "answered question must record answered_by"
+                for issue in issues
+            )
+        )
+
+    def test_long_open_question_warns_without_failing(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_question(root, "harness-owner.md", VALID_QUESTION)
+            issues = lint(root, date(2026, 11, 15))
+        stale = [issue for issue in issues if "has been open" in issue.message]
+        self.assertEqual(1, len(stale))
+        self.assertEqual("warning", stale[0].severity)
+        self.assertFalse(any(issue.severity == "error" for issue in issues))
+
+    def test_dropped_question_stops_warning(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.write_question(
+                root,
+                "harness-owner.md",
+                VALID_QUESTION.replace("status: open", "status: dropped"),
+            )
+            issues = lint(root, date(2026, 11, 15))
+        self.assertEqual([], issues)
 
 
 if __name__ == "__main__":

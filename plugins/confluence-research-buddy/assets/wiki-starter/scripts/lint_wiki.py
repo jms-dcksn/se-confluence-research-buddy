@@ -49,6 +49,11 @@ VALID_BANDS = {"core", "adjacent", "frontier"}
 INBOX_REQUIRED_FIELDS = {"id", "proposal_type", "title", "raised", "status", "evidence"}
 VALID_INBOX_STATUSES = {"pending", "accepted", "rejected"}
 VALID_PROPOSAL_TYPES = {"theme", "scope-change", "product"}
+THEME_REQUIRED_FIELDS = {"title", "kind", "maturity", "last_reviewed", "emerged_from"}
+VALID_MATURITIES = {"emerging", "established", "faded"}
+MIN_THEME_EVIDENCE = 3
+QUESTION_REQUIRED_FIELDS = {"id", "title", "raised", "status", "answered_by"}
+VALID_QUESTION_STATUSES = {"open", "answered", "dropped"}
 SCOPE_BUDGET_FIELDS = (
     "frontier_searches",
     "sweep_activity_days",
@@ -60,6 +65,8 @@ SCOPE_BUDGET_FIELDS = (
 # backlog is a review signal, not a broken wiki.
 STALE_SIGNAL_DAYS = 45
 STALE_INBOX_DAYS = 30
+STALE_QUESTION_DAYS = 60
+UNSYNTHESIZED_THEME_DAYS = 90
 
 
 @dataclass(frozen=True)
@@ -311,6 +318,96 @@ def _validate_inbox(wiki_root: Path, today: date) -> list[ValidationIssue]:
     return issues
 
 
+def _validate_themes(wiki_root: Path, today: date) -> list[ValidationIssue]:
+    """A theme asserts that a pattern spans products, so it must carry the
+    evidence that made it one. Unlike a claim it does not expire, but it does
+    go stale: an un-resynthesized theme warns rather than fails."""
+    issues: list[ValidationIssue] = []
+
+    for path in sorted((wiki_root / "themes").glob("*.md")):
+        metadata = parse_frontmatter(path)
+        for field in sorted(THEME_REQUIRED_FIELDS - metadata.keys()):
+            issues.append(_issue(path, f"missing required field: {field}"))
+
+        maturity = metadata.get("maturity")
+        if "maturity" in metadata and maturity not in VALID_MATURITIES:
+            issues.append(_issue(path, f"invalid maturity: {maturity}"))
+
+        evidence = _as_list(metadata.get("emerged_from"))
+        if "emerged_from" in metadata and not evidence:
+            issues.append(_issue(path, "theme must record the evidence it emerged from"))
+        elif maturity != "faded" and 0 < len(evidence) < MIN_THEME_EVIDENCE:
+            issues.append(
+                _warn(
+                    path,
+                    f"theme rests on fewer than {MIN_THEME_EVIDENCE} pieces of evidence",
+                )
+            )
+
+        if not _is_configured_date(metadata.get("last_reviewed")):
+            issues.append(_issue(path, "last_reviewed must be a configured YYYY-MM-DD date"))
+
+        synthesized = metadata.get("last_synthesized")
+        if "last_synthesized" in metadata:
+            if not _is_configured_date(synthesized):
+                issues.append(
+                    _issue(path, "last_synthesized must be a configured YYYY-MM-DD date")
+                )
+            elif (today - date.fromisoformat(str(synthesized))).days > UNSYNTHESIZED_THEME_DAYS:
+                issues.append(
+                    _warn(
+                        path,
+                        f"theme has not been re-grounded in {UNSYNTHESIZED_THEME_DAYS} days",
+                    )
+                )
+
+    return issues
+
+
+def _validate_questions(wiki_root: Path, today: date) -> list[ValidationIssue]:
+    """Open questions are the research agenda. They never fail a run, but a
+    question nobody has resolved or dropped is a backlog item."""
+    issues: list[ValidationIssue] = []
+    seen: set[str] = set()
+
+    for path in sorted((wiki_root / "questions").glob("*.md")):
+        metadata = parse_frontmatter(path)
+        for field in sorted(QUESTION_REQUIRED_FIELDS - metadata.keys()):
+            issues.append(_issue(path, f"missing required field: {field}"))
+
+        question_id = metadata.get("id")
+        if not isinstance(question_id, str) or not question_id:
+            issues.append(_issue(path, "id must be a non-empty string"))
+            continue
+        if question_id in seen:
+            issues.append(_issue(path, f"duplicate question id: {question_id}"))
+            continue
+        seen.add(question_id)
+
+        status = metadata.get("status")
+        if "status" in metadata and status not in VALID_QUESTION_STATUSES:
+            issues.append(_issue(path, f"invalid question status: {status}"))
+
+        if status == "answered" and not _as_list(metadata.get("answered_by")):
+            issues.append(_issue(path, "answered question must record answered_by"))
+
+        try:
+            raised = date.fromisoformat(str(metadata.get("raised")))
+        except ValueError:
+            issues.append(_issue(path, "raised must be YYYY-MM-DD"))
+        else:
+            if status == "open" and (today - raised).days > STALE_QUESTION_DAYS:
+                issues.append(
+                    _warn(
+                        path,
+                        f"question has been open for more than {STALE_QUESTION_DAYS} days; "
+                        "answer or drop it",
+                    )
+                )
+
+    return issues
+
+
 def lint(root: Path, today: date) -> list[ValidationIssue]:
     root = root.resolve()
     wiki_root = root / "wiki"
@@ -319,6 +416,8 @@ def lint(root: Path, today: date) -> list[ValidationIssue]:
     signal_issues, _ = _validate_signals(wiki_root, today)
     issues.extend(signal_issues)
     issues.extend(_validate_inbox(wiki_root, today))
+    issues.extend(_validate_themes(wiki_root, today))
+    issues.extend(_validate_questions(wiki_root, today))
     claims: dict[str, tuple[Path, dict[str, object]]] = {}
 
     for path in claim_paths:
@@ -401,7 +500,12 @@ def lint(root: Path, today: date) -> list[ValidationIssue]:
     # A claim is anchored only by the navigable wiki: product and theme pages,
     # the index, logs. Signals and inbox proposals are a staging area, so a
     # link from one of them does not rescue a claim from being an orphan.
-    staging_dirs = {wiki_root / "claims", wiki_root / "signals", wiki_root / "inbox"}
+    staging_dirs = {
+        wiki_root / "claims",
+        wiki_root / "signals",
+        wiki_root / "inbox",
+        wiki_root / "questions",
+    }
     inbound_claim_links: set[Path] = set()
     for page in wiki_root.rglob("*.md"):
         for target in _wikilinks(page):

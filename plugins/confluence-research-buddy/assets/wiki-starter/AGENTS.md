@@ -15,6 +15,8 @@ the index, then append a log entry.
 | --- | --- | --- |
 | Evidence | `wiki/claims/` | Dated, cited, status-classified, expires at 90 days. Customer-facing. |
 | Discovery | `wiki/signals/` | One observation, one source. No status, no freshness label, no expiry. Asserts nothing. |
+| Concept | `wiki/themes/` | A named pattern spanning products. Carries its emergence evidence and a maturity, does not expire, but goes stale without re-grounding. |
+| Agenda | `wiki/questions/` | What the wiki does not know. Consumed by the next digest as search seeds. |
 
 Keep them separate. A signal is not a weak claim, and a claim is not a
 well-supported signal. Never upgrade a signal by adding a status to it; promote
@@ -31,8 +33,10 @@ generally available, scheduled, or a customer commitment.
 
 ## What may be written unattended
 
-Write directly: claims, signals, product pages for accepted topics, the
-`adjacent` band, the discovery log, logs, and raw records.
+Write directly: claims, signals, questions, product pages for accepted topics,
+the `adjacent` band, the discovery log, logs, and raw records. Theme maturity
+changes and `last_synthesized` updates on existing themes are also direct; only
+creating a theme requires a decision.
 
 Propose through `wiki/inbox/` and leave untouched: new theme pages, any change
 to `core` or `excluded`, and product pages for topics nobody accepted. Every
@@ -44,6 +48,17 @@ Searching only the `core` band is an incomplete run. Spend the discovery budget
 in `wiki/research-scope.md` on work outside every band, favor evidence that
 recurs across unrelated products, and record what was swept and dismissed as
 well as what was kept.
+
+Read open questions before searching and append to them after. A run that
+answers nothing and asks nothing has repeated the previous run rather than
+built on it.
+
+## Trends are found weekly, not daily
+
+A daily run cannot see a pattern; it sees one day. The synthesis pass on
+`synthesis_day` reads the accumulated wiki rather than Confluence and is the
+only place themes are proposed. Three unrelated products doing the same thing
+is a theme. One product doing something three times is that product working.
 
 Do not auto-commit, delete raw records, erase historical claims, re-raise a
 proposal a human rejected, or silently reinterpret evidence. A no-material-change

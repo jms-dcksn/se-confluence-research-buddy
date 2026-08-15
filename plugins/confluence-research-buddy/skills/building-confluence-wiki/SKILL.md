@@ -22,6 +22,7 @@ Collect or confirm these inputs before changing files:
 | Excluded areas | Spaces or topics the sweep must never surface. Optional; ask, do not assume. |
 | Discovery budget | Searches per run spent outside every band. Default 5. |
 | Instance size | Rough number of active Confluence spaces, used to set the sweep caps |
+| Synthesis day | Weekday the trend pass runs. Default Sunday. |
 | Ingest mode | Manual only or scheduled digest |
 | Schedule | Digest time and timezone, if scheduled |
 
@@ -64,8 +65,8 @@ label, and evidence status.
    `wiki/index.md`.
 5. Populate `wiki/research-scope.md`: the exact topic names in order under
    `core`, any excluded areas under `excluded`, an empty `adjacent` band, the
-   discovery budget and sweep caps, absolute destination, digest time,
-   timezone, and setup date. For manual-only setup, use `manual-only` for
+   discovery budget and sweep caps, the synthesis day, absolute destination,
+   digest time, timezone, and setup date. For manual-only setup, use `manual-only` for
    digest time and timezone. Leave no setup placeholder in the page.
 6. Replace `last_reviewed: YYYY-MM-DD` in `wiki/index.md` with the setup date.
    Initialize `logs/YYYY-MM.md` for the current month with a Markdown heading
@@ -90,7 +91,9 @@ label, and evidence status.
 ## Optional scheduled digest
 
 For manual-only setup, stop after validation and do not read the scheduling
-reference.
+reference. Mention that `contracts/synthesis-pass.md`, copied into the
+destination with the starter, can still be run by hand whenever the user wants a
+trend review, since it reads the wiki rather than Confluence.
 
 When scheduling is requested:
 
@@ -148,9 +151,20 @@ Walk the user through the two things the digest will produce beyond claims:
   until the user accepts it, and the linter warns once an item has been pending
   for a month.
 
+- `wiki/questions/` is the research agenda. The digest reads open questions as
+  search seeds and appends what it searched, so the wiki directs its own next
+  run instead of restarting from the topic list each time.
+
 Say plainly that the digest will edit the `adjacent` band and the discovery log
 by itself, and will never touch `core` or `excluded`. Point at the discovery
 log as the place to see what it has been steering toward.
+
+Explain the weekly rhythm: the daily run keeps known work current, and on the
+synthesis day it also reads the accumulated wiki — not Confluence — looking for
+patterns across products. Themes come only from that pass, and arrive as
+proposals in the inbox. Tell the user that an accepted theme is where the
+"new topic for the wiki" actually gets named, and that rejecting one is a
+normal outcome, not a failure.
 
 ## Common mistakes
 
@@ -167,3 +181,6 @@ log as the place to see what it has been steering toward.
 | Editing `core` or `excluded` unattended | Raise an inbox proposal and wait |
 | Writing a theme page from one run | Themes assert a pattern; propose, do not create |
 | Recording a signal as a claim | Signals carry no status and expire nothing |
+| Calling one product's activity a theme | A theme spans products; three sightings in one team is not one |
+| Running synthesis against Confluence | It reads the wiki; retrieval belongs to the daily passes |
+| Deleting a theme that stopped moving | Demote it to `faded`; the history is the point |
