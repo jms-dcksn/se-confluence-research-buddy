@@ -17,6 +17,5 @@
     "sales-engineering",
     "obsidian"
   ],
-  "skills": "./skills/",
-  "mcpServers": "./.mcp.json"
+  "skills": "./skills/"
 }

@@ -11,16 +11,21 @@ wiki.
 /plugin install confluence-research-buddy@confluence-research-tools
 ```
 
-The plugin bundles the Atlassian Rovo MCP server. Run `/mcp` after installing
-and authenticate the `atlassian` server, listed as
-`plugin:confluence-research-buddy:atlassian`. Verify with `/plugin` that the
-plugin is enabled and with `/mcp` that the server is connected, then invoke a
-skill with `/confluence-research-buddy:researching-confluence` or
-`/confluence-research-buddy:building-confluence-wiki`, or use one of the
-prompts below.
+The plugin ships no MCP server. Retrieval comes from the **Atlassian Rovo
+connector**, which you add once in the **Claude Desktop app or on claude.ai** —
+Settings, then Connectors — and authorize against your Atlassian site. That
+applies across sessions, including Desktop scheduled tasks. Start a new Claude
+Code session afterwards so its tools load.
 
-If you already reach Atlassian through your own MCP config, disable the bundled
-`atlassian` server in `/mcp`; the skills will use yours.
+Verify with `/plugin` that the plugin is enabled, then invoke a skill with
+`/confluence-research-buddy:researching-confluence` or
+`/confluence-research-buddy:building-confluence-wiki`, or use one of the prompts
+below. The skills check Atlassian by calling the connector and reporting which
+site answered; a connector can show as connected while advertising no tools, so a
+green status line is not a check.
+
+Reaching Atlassian through your own MCP config works too — the skills find Rovo
+tools by bare Atlassian name, never by server prefix.
 
 For the scheduled digest, use a Desktop scheduled task. The digest reads and
 writes a local folder, so a cloud Routine — which starts from a fresh clone —

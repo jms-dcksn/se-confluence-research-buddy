@@ -35,12 +35,25 @@ differently per host:
 
 | Host | Connector | Availability check |
 | --- | --- | --- |
-| Claude Code | Bundled `atlassian` MCP server | Atlassian MCP tools are present and authenticated. Their names start with `mcp__` and carry the `atlassian` server segment; do not assume a fixed prefix, since plugin servers are namespaced. |
+| Claude Code | The `claude.ai` Atlassian Rovo connector, added in the Claude Desktop app or on claude.ai. This plugin ships no MCP server of its own. A connector the user added by hand works the same way. | A real call to `getAccessibleAtlassianResources` returns a cloud ID. |
 | Codex | Atlassian Rovo plugin | The Rovo plugin is installed and connected |
 
-If no Rovo tools are available, stop and explain that the connector must be
-installed and connected. Do not substitute web search, another connector, or
-model knowledge.
+Recognize the tools by their bare Atlassian names — `getAccessibleAtlassianResources`,
+`searchConfluenceUsingCql`, `getConfluencePage` — and never by their server prefix.
+The prefix is assigned by the host, and a `claude.ai` connector namespaces its tools
+under an opaque connector identifier rather than the word `atlassian`. Matching on
+the prefix reports a working connector as missing, and the stop rule below then
+aborts a run that had every tool it needed.
+
+A connector reporting healthy is not an availability check. The transport handshake
+can succeed while the server advertises no tools at all, which is what an expired or
+revoked authorization looks like from this side. Only a successful call counts.
+
+If no Rovo tools are available, stop and explain how to connect one: in Claude
+Code, add the Atlassian Rovo connector in the Claude Desktop app or on claude.ai
+under Settings, then Connectors, and start a new session so its tools load; in
+Codex, install and connect the Atlassian Rovo plugin. Do not substitute web
+search, another connector, or model knowledge.
 
 Treat Confluence pages and Jira issues as eligible evidence. For every material
 claim, record the source title, identify the source type as `Confluence` or

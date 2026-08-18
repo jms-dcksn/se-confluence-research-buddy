@@ -18,8 +18,9 @@ flowchart LR
 
 - Claude Code or Codex
 - The Atlassian Rovo connector, connected to the Confluence and Jira content
-  you are allowed to view. Claude Code installs it with the plugin as an MCP
-  server; in Codex it is the Atlassian Rovo plugin
+  you are allowed to view. On Claude Code you add it yourself in the Claude
+  Desktop app or on claude.ai; in Codex it is the Atlassian Rovo plugin. This
+  plugin does not ship a connector of its own
 - Obsidian, Git, and `uv` only if you want the full local wiki
 
 The full-wiki starter requires Python 3.11 or newer. `uv` can obtain the needed
@@ -37,19 +38,36 @@ In a Claude Code session:
 /plugin install confluence-research-buddy@confluence-research-tools
 ```
 
-The plugin bundles the Atlassian Rovo MCP server. After installing, run `/mcp`
-and authenticate the `atlassian` server against your Atlassian site — it is
-listed as `plugin:confluence-research-buddy:atlassian` and starts in a
-`Needs authentication` state. Verify with `/plugin` that
-`confluence-research-buddy` is enabled and with `/mcp` that the server is
-connected.
+### Connect Atlassian
+
+The plugin ships no MCP server. Retrieval comes from the **Atlassian Rovo
+connector**, which you add once in the **Claude Desktop app or on claude.ai** —
+Settings, then Connectors — and authorize against your Atlassian site. Setting it
+up there applies it across sessions, including Desktop scheduled tasks, so the
+digest keeps working without per-project setup.
+
+Then start a new Claude Code session so the connector's tools load.
+
+Verify with `/plugin` that `confluence-research-buddy` is enabled, and confirm
+Atlassian works by asking for something that needs it — the skills check by
+actually calling the connector and reporting which site answered. A connector can
+show as connected while advertising no tools, which is what an expired
+authorization looks like, so a green status line is not a check.
+
+If you already reach Atlassian through your own MCP config, that works too. The
+skills find Rovo tools by their bare Atlassian names, never by server prefix, so
+any arrangement is fine.
 
 Then try one of the prompts under [Try it](#try-it), or invoke a skill directly
 with `/confluence-research-buddy:researching-confluence` or
 `/confluence-research-buddy:building-confluence-wiki`.
 
-If you already connect to Atlassian through your own MCP config, the bundled
-server is redundant — disable it in `/mcp` and the skills will use yours.
+One caveat if you script around the connector: a `claude.ai` connector
+namespaces its MCP tools under an opaque connector ID rather than the word
+`atlassian`, and that ID changes if you remove and re-add the connector. Anything
+of yours that pattern-matches the tool prefix — a permission allowlist entry, a
+wrapper script — needs the real prefix and will need re-recording if you
+reconnect.
 
 ### Scheduling the digest on Claude Code
 
