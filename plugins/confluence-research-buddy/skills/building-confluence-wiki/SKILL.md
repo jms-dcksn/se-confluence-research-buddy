@@ -36,12 +36,36 @@ raise it toward full coverage on a small instance, and lower it on a large or
 noisy one so a single run stays bounded. Tell the user which values you chose
 and that they can edit them in `wiki/research-scope.md` at any time.
 
-Confirm the Atlassian Rovo connector is installed and connected before setup.
-In Claude Code it is the bundled `atlassian` MCP server: check that its tools
-are present and authenticated, matching on the `atlassian` server segment
-rather than a fixed `mcp__` prefix. In Codex it is the Atlassian Rovo plugin.
-If it is unavailable, stop and explain that the connector must be installed and
-connected. Do not substitute unverified snippets or another connector.
+### Check the Atlassian connector first
+
+This plugin ships no MCP server of its own. Retrieval comes from a connector the
+user owns, so confirm it works **before** collecting inputs or touching files. A
+wiki built against a dead connector is a folder of empty templates, and the user
+will not find out until the first digest.
+
+Check it by **calling** `getAccessibleAtlassianResources` and getting a cloud ID
+back. That is the only check that means anything:
+
+- Find the tools by their bare Atlassian names — `getAccessibleAtlassianResources`,
+  `searchConfluenceUsingCql`, `getConfluencePage`. Never by server prefix. The
+  prefix is assigned by the host, and a `claude.ai` connector namespaces its tools
+  under an opaque connector identifier rather than the word `atlassian`, so
+  matching on the prefix reads a working connector as absent.
+- A connector reporting connected is not evidence. The transport handshake can
+  succeed while the server advertises zero tools, which is what an expired or
+  revoked authorization looks like from this side.
+
+If the call does not return a cloud ID, stop and tell the user how to fix it. Do
+not build the wiki, and do not substitute unverified snippets or another
+connector:
+
+| Host | How the user connects Atlassian |
+| --- | --- |
+| Claude Code | Add the **Atlassian Rovo connector** in the Claude Desktop app or on claude.ai — Settings, then Connectors. Configuring it there applies it across sessions, including Desktop scheduled tasks. Then start a new session so the tools load. |
+| Codex | Install and connect the Atlassian Rovo plugin. |
+
+Report which site the cloud ID belongs to, so the user can catch being connected
+to the wrong Atlassian instance while everything still looks healthy.
 
 Confluence pages and Jira issues retrieved through Atlassian Rovo are both
 eligible sources. Every material claim must include a source title, direct URL,
